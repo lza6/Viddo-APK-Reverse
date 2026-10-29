@@ -1,0 +1,16 @@
+# 反编译产物（体积大，不入库）
+apktool_out/
+jadx_out/
+jadx_bad/
+jadx_res/
+blutter_out/
+libapp_strings.txt
+viddo.apk
+cfg_*.json
+
+# 运行期产物
+last_pid.txt
+hit_consumetype.txt
+gateway/server.log
+__pycache__/
+*.pyc

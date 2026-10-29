@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Viddo v4.0.4.1 — R1 协议链路 Demo</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --line:#30363d; --fg:#e6edf3; --dim:#8b949e;
+          --ok:#3fb950; --warn:#d29922; --bad:#f85149; --acc:#58a6ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  header { padding:18px 22px; border-bottom:1px solid var(--line); display:flex;
+           gap:16px; align-items:baseline; flex-wrap:wrap; }
+  h1 { font-size:16px; margin:0; font-weight:600; }
+  .tag { font-size:12px; color:var(--dim); }
+  .pill { font-size:11px; padding:1px 7px; border:1px solid var(--line); border-radius:99px; color:var(--dim); }
+  main { display:grid; grid-template-columns: 380px 1fr; gap:0; height:calc(100vh - 62px); }
+  #left { overflow:auto; border-right:1px solid var(--line); padding:14px; }
+  #right { display:flex; flex-direction:column; min-height:0; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:8px;
+            padding:12px; margin-bottom:12px; }
+  section h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+               color:var(--dim); margin:0 0 10px; font-weight:600; }
+  label { display:block; font-size:12px; color:var(--dim); margin:8px 0 3px; }
+  input, select { width:100%; background:#0d1117; border:1px solid var(--line); color:var(--fg);
+                  border-radius:6px; padding:6px 8px; font:inherit; }
+  button { background:#21262d; border:1px solid var(--line); color:var(--fg); border-radius:6px;
+           padding:6px 10px; font:inherit; cursor:pointer; margin:8px 6px 0 0; }
+  button:hover { border-color:var(--acc); color:var(--acc); }
+  button.primary { background:#1f6feb; border-color:#1f6feb; color:#fff; }
+  button.primary:hover { background:#388bfd; color:#fff; }
+  #log { flex:1; overflow:auto; padding:12px; }
+  .entry { border-bottom:1px solid #21262d; padding:8px 0; }
+  .entry .hd { display:flex; gap:10px; align-items:baseline; font-size:12px; color:var(--dim); }
+  .m { color:var(--acc); }
+  .code-ok { color:var(--ok); } .code-bad { color:var(--bad); } .code-warn { color:var(--warn); }
+  pre { margin:6px 0 0; background:#0d1117; border:1px solid var(--line); border-radius:6px;
+        padding:8px; overflow:auto; max-height:320px; font-size:12px; white-space:pre-wrap; word-break:break-all; }
+  .kv { display:flex; justify-content:space-between; gap:8px; font-size:12px; }
+  .kv b { color:var(--acc); font-weight:600; }
+  .note { font-size:11px; color:var(--dim); margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Viddo v4.0.4.1 (Pro) — 第一轮协议链路 Demo</h1>
+  <span class="pill">appId YZ080</span>
+  <span class="pill">aicup-v2.magicutapp.com</span>
+  <span class="pill" id="health">upstream: 检测中…</span>
+</header>
+
+<main>
+  <div id="left">
+    <section>
+      <h2>1 · 虚拟设备 / 会话</h2>
+      <label>android_id（uuId = jrxc_ + 该值）</label>
+      <input id="aid" value="demo00000000001" />
+      <button class="primary" onclick="mkIdentity()">v4/getUuid</button>
+      <button onclick="mkS3()">取 S3 凭证</button>
+      <div id="idOut" class="note">未初始化</div>
+    </section>
+
+    <section>
+      <h2>2 · 积分用户</h2>
+      <label>pointId</label>
+      <input id="pid" placeholder="点“新建用户”获得" />
+      <button onclick="newPoint()">新建用户</button>
+      <button onclick="balance()">查余额</button>
+      <button onclick="tasks()">任务表</button>
+      <div id="ptOut" class="note">—</div>
+    </section>
+
+    <section>
+      <h2>3 · 领任务积分</h2>
+      <label>taskId</label>
+      <select id="tid">
+        <option value="1">1 · 每日登录 +20</option>
+        <option value="193">193 · 激励广告 +2</option>
+        <option value="60">60 · 开启通知 +5</option>
+        <option value="61">61 · 评分 +5</option>
+        <option value="62">62 · 分享 +5</option>
+        <option value="56">56 · 7日签到 +20(首日)</option>
+      </select>
+      <button onclick="claim()">doAddTaskPoint</button>
+    </section>
+
+    <section>
+      <h2>4 · 提交生成任务</h2>
+      <label>prompt</label>
+      <input id="prompt" value="a cat walking on grass, cinematic" />
+      <label>aspect_ratio</label>
+      <select id="ratio"><option>9:16</option><option>16:9</option><option>1:1</option></select>
+      <label>consumeType（92 = AI特效腾讯 30点）</label>
+      <input id="ct" value="92" />
+      <label>platFormId（空 = 使用默认平台）</label>
+      <input id="pf" value="" />
+      <button class="primary" onclick="submitTask()">v3/texttovideonew</button>
+      <div id="taskOut" class="note">—</div>
+      <label style="margin-top:10px">轮询 key</label>
+      <input id="key" placeholder="提交后自动填入" />
+      <button onclick="pollOnce()">轮询一次</button>
+      <button onclick="pollLoop()">连续轮询</button>
+    </section>
+  </div>
+
+  <div id="right">
+    <div style="padding:10px 14px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:center">
+      <span class="tag">请求 / 响应流水</span>
+      <button style="margin:0" onclick="document.getElementById('log').innerHTML=''">清空</button>
+    </div>
+    <div id="log"></div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const aid = () => $('aid').value.trim();
+const pid = () => $('pid').value.trim();
+let pollTimer = null;
+
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function log(method, path, status, payload, ms) {
+  const cls = status >= 200 && status < 300 ? 'code-ok' : (status >= 400 ? 'code-bad' : 'code-warn');
+  const div = document.createElement('div');
+  div.className = 'entry';
+  div.innerHTML = `<div class="hd"><span class="m">${method}</span><span>${esc(path)}</span>
+      <span class="${cls}">${status}</span><span>${ms ?? ''}ms</span></div>
+      <pre>${esc(JSON.stringify(payload, null, 2))}</pre>`;
+  $('log').prepend(div);
+}
+
+async function call(method, path, body) {
+  const t0 = performance.now();
+  const opt = { method, headers: {'content-type':'application/json'} };
+  if (body) opt.body = JSON.stringify(body);
+  const r = await fetch(path, opt);
+  let j;
+  try { j = await r.json(); } catch(e) { j = { raw: await r.text() }; }
+  log(method, path, r.status, j, Math.round(performance.now() - t0));
+  return j;
+}
+
+async function health(){
+  const j = await call('GET', '/api/health');
+  $('health').textContent = j.ok ? 'upstream: 可达' : 'upstream: 异常';
+  $('health').style.color = j.ok ? 'var(--ok)' : 'var(--bad)';
+}
+
+async function mkIdentity(){
+  const j = await call('POST', '/api/identity', { android_id: aid() });
+  $('idOut').innerHTML = j.uId
+    ? `<div class="kv"><span>uuId</span><b>${esc(j.uuId)}</b></div>
+       <div class="kv"><span>uId</span><b>${esc(j.uId)}</b></div>
+       <div class="kv"><span>priority</span><b>${esc(j.priority)}</b></div>`
+    : '失败，见右侧流水';
+}
+
+async function mkS3(){
+  const j = await call('GET', '/api/s3creds?tag=texttovideo&android_id=' + encodeURIComponent(aid()));
+  const o = j.upstream?.other || {};
+  $('idOut').innerHTML = `<div class="kv"><span>bucket</span><b>${esc(o.bucketName||'-')}</b></div>
+    <div class="kv"><span>region</span><b>${esc(o.region||'-')}</b></div>
+    <div class="kv"><span>dir</span><b>${esc(o.dir||'-')}</b></div>
+    <div class="kv"><span>accessKey</span><b>${esc((o.accessKey||'').slice(0,10))}…</b></div>`;
+}
+
+async function newPoint(){
+  const j = await call('POST', '/api/points/new', { android_id: aid() });
+  let p = null;
+  try { p = JSON.parse(j.plain)?.pointId; } catch(e){}
+  if (p) { $('pid').value = p; $('ptOut').textContent = 'pointId = ' + p; }
+  else { $('ptOut').textContent = '未拿到 pointId（可能触发 device limit 风控）'; }
+}
+
+async function balance(){
+  const j = await call('GET', '/api/points/balance?android_id=' + encodeURIComponent(aid()) +
+                       '&point_id=' + encodeURIComponent(pid()));
+  let b = null; try { b = JSON.parse(j.balance.plain); } catch(e){}
+  $('ptOut').textContent = b ? `余额 ${b.pointNumber} 点（pointId ${j.point_id}）` : '查询失败';
+}
+
+async function tasks(){
+  await call('GET', '/api/points/tasks?android_id=' + encodeURIComponent(aid()) +
+             '&point_id=' + encodeURIComponent(pid()));
+}
+
+async function claim(){
+  const j = await call('POST', '/api/points/claim',
+      { android_id: aid(), point_id: pid(), task_id: $('tid').value });
+  let p = null; try { p = JSON.parse(j.plain); } catch(e){}
+  $('ptOut').textContent = p ? `task ${$('tid').value} → ${p.retMsg}（余额 ${p.pointNumber ?? '-'}）` : '领取失败';
+}
+
+async function submitTask(){
+  const j = await call('POST', '/api/task', {
+    android_id: aid(),
+    prompt: $('prompt').value,
+    aspect_ratio: $('ratio').value,
+    consume_type: $('ct').value,
+    platFormId: $('pf').value,
+    point_id: pid()
+  });
+  const k = j.upstream?.data;
+  if (k) { $('key').value = k; $('taskOut').textContent = '已受理 key=' + k; }
+  else { $('taskOut').textContent = '提交失败 code=' + (j.upstream?.code ?? '?'); }
+}
+
+async function pollOnce(){
+  const k = $('key').value.trim();
+  if (!k) return;
+  const j = await call('GET', '/api/task/' + encodeURIComponent(k) + '?android_id=' + encodeURIComponent(aid()));
+  $('taskOut').textContent = `code=${j.code} process=${j.process} msg=${j.message ?? ''}`;
+  return j;
+}
+
+function pollLoop(){
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; return; }
+  pollTimer = setInterval(pollOnce, 4000);
+}
+
+health();
+mkIdentity();
+</script>
+</body>
+</html>
