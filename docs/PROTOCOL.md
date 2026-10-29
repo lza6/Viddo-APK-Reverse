@@ -240,10 +240,10 @@ python stress\stress_r1.py --conc 16 --n 200
    `appId=YZ080` 的「共用表」里没有 `texttovideonew` 的功能行。该表由运营后台写入，
    客户端只做透传，**无法离线枚举**。
 
-### 后续唯一有效路线
+### 后续唯一有效路线（A 已走完，见 `docs/R2_CAPTURE.md`）
 
 | 路线 | 做法 | 成本 | 判断 |
 |------|------|------|------|
-| A 真机/模拟器抓包 | 装原版 APK，UI 里真实跑一次文生视频，mitmproxy 抓 `content`+`decrypt` 拿到真实 `(consumeType, platFormId)` | 中（需过 NSC + CA 装系统区） | **唯一能定案** |
+| A 真机/模拟器抓包 | 装 APK，UI 里真实跑一次生成，Frida 抓 `content`/`decrypt` | 中 | **已执行：客户端本地 `Token Error` 短路，零出网，未取到参数** |
 | B 配置接口 | `api.videoshowapp.com/videoshow/api/v2/config` 恒 500（11 种参数名 × GET/POST 全试过）；`camera.magicutapp.com` 的 `themePackage` 对 `type=TextToVideo` 恒返回空集 | 低 | **已判定无效** |
 | C 放弃 | 若 UI 里该功能本身也报错，则该 App 的 AI 能力整体不可用 | 0 | 抓包后再说 |

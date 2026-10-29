@@ -98,6 +98,20 @@ viddo404/
 
 ---
 
+## 4.5 R2 抓包（A 路线）结果
+
+在 Android 11 x86_64 AVD（root + GMS + libndk_translation）上安装该 APK，
+Frida spawn 全程挂钩后复跑：App 能启动、UI 完全可用（Home / TEXT / SKETCH / GALLERY），
+但点 `Create` 立刻弹 `Token Error. Please contact support!`，**全程零网络请求**：
+
+- 全局 OkHttp `Request.Builder.build` 钩子：0 条
+- 设备 TCP 采样 20s：仅 Firebase 5228，无新增外连
+- `AI-Service`（存 uId 的 SP）不存在 → `v4/getUuid` 从未成功
+- `AIServiceSdk.a()` / `AIServiceLib.h(appId=YZ080)` 均被调用，但 `ServiceApis.o()`（取 uId）从未被调用
+
+结论：该 build（LiteApks "Pro" 修改版）的生成链路在客户端被 token 预检掐断，
+与 L2 侧「共用表无功能行（1405）」互相印证。细节与复现命令见 `docs/R2_CAPTURE.md`。
+
 ## 5. 脱敏说明
 
 文档/代码中涉及上游凭证处一律脱敏：

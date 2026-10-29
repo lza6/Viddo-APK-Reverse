@@ -17,7 +17,8 @@
 | RSA / MD5 签名 / multipart 格式 | ✅ 已验证 | 提交返回受理 key |
 | L1 3DES 信封 + 积分体系 | ✅ 已验证 | 建号/配置/领点/余额全通 |
 | S3 临时凭证签发行为 | ✅ 已验证（脱敏记录） | `GET /api/s3creds` |
-| 任务真实出片 | ❌ 阻断 | 轮询 `1404/1405`，需 R2 抓包 |
+| 任务真实出片 | ❌ 阻断 | 轮询 `1404/1405`（服务端共用表） |
+| R2 真机/模拟器抓包 | ❌ 未取到参数 | 客户端本地 `Token Error` 短路，零出网（`docs/R2_CAPTURE.md`） |
 | 第一轮压测 | ✅ | `stress/stress_round1.json` |
 
 ---
@@ -35,7 +36,9 @@ viddo404/
 ├ probe_consumetypes.py    # consumeType 穷举探测
 ├ docs/PROTOCOL.md         # ★ 协议手册（实现用）
 ├ docs/REVERSE_REPORT.md   # 逆向与压测报告（含安全发现）
-├ docs/NEWAPI_INTEGRATION.md # 若后续打通，接入 new-api 的方案
+├ docs/R2_CAPTURE.md       # ★ 真机/模拟器抓包报告（A 路线证据链）
+├ docs/NEWAPI_INTEGRATION.md # ★ 对接 new-api 的完整实现规格（给你自己对接用）
+├ frida/                   # 抓包脚本（hook.js / hook2.js / hook3.js / driver*.py）
 └ apktool_out/ jadx_out/ blutter_out/   # 反编译产物（体积大，不入库）
 ```
 
